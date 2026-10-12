@@ -43,8 +43,20 @@ export default function Home() {
   const [cargando, setCargando] = useState(false);
   const [montado, setMontado] = useState(false);
   const [form, setForm] = useState<FormData>(FORM_INICIAL);
+  const [fechaMinima, setFechaMinima] = useState('');
+  const [anioActual, setAnioActual] = useState<number | null>(null);
 
   useEffect(() => {
+    const ahora = new Date();
+
+    const fechaLocal = new Date(
+      ahora.getTime() - ahora.getTimezoneOffset() * 60000
+    )
+      .toISOString()
+      .slice(0, 16);
+
+    setFechaMinima(fechaLocal);
+    setAnioActual(ahora.getFullYear());
     setMontado(true);
   }, []);
 
@@ -82,9 +94,11 @@ export default function Home() {
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
+    const { name, value } = e.target;
+
     setForm((actual) => ({
       ...actual,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
@@ -125,7 +139,9 @@ export default function Home() {
         fecha: fechaSeleccionada.toISOString(),
       });
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       setEnviado(true);
     } catch (error) {
@@ -140,7 +156,7 @@ export default function Home() {
     setMostrarFormulario(true);
     setEnviado(false);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       document
         .getElementById('reservas')
         ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -152,12 +168,6 @@ export default function Home() {
     setEnviado(false);
     setForm(FORM_INICIAL);
   };
-
-  const fechaMinima = new Date(
-    Date.now() - new Date().getTimezoneOffset() * 60000
-  )
-    .toISOString()
-    .slice(0, 16);
 
   if (!montado) {
     return <div className="min-h-screen bg-slate-950" />;
@@ -181,12 +191,15 @@ export default function Home() {
             <a href="#nosotros" className="transition hover:text-cyan-400">
               Nosotros
             </a>
+
             <a href="#servicios" className="transition hover:text-cyan-400">
               Servicios
             </a>
+
             <a href="#galeria" className="transition hover:text-cyan-400">
               Galería
             </a>
+
             <a href="#reservas" className="transition hover:text-cyan-400">
               Reservas
             </a>
@@ -200,7 +213,7 @@ export default function Home() {
         <div className="relative z-10 max-w-3xl">
           <div className="gsap-hero-title">
             <p className="mb-4 text-xs font-semibold uppercase tracking-[0.5em] text-cyan-400">
-              Evolución & Estilo Urbano
+              Evolución &amp; Estilo Urbano
             </p>
 
             <h2 className="text-4xl font-black leading-tight text-white sm:text-6xl">
@@ -256,7 +269,9 @@ export default function Home() {
             className="relative flex h-64 flex-col justify-center rounded-2xl border border-sky-500/10 bg-gradient-to-br from-slate-900 to-sky-950 p-8 shadow-inner"
             data-aos="zoom-in"
           >
-            <div className="mb-2 text-4xl font-black text-cyan-400">100%</div>
+            <div className="mb-2 text-4xl font-black text-cyan-400">
+              100%
+            </div>
 
             <div className="font-bold uppercase tracking-wider text-white">
               Garantía de satisfacción
@@ -522,7 +537,7 @@ export default function Home() {
 
       <footer className="border-t border-slate-900 px-6 py-8 text-center">
         <p className="text-xs uppercase tracking-widest text-slate-500">
-          © {new Date().getFullYear()} Cyber Barber. Todos los derechos reservados.
+          © {anioActual} Cyber Barber. Todos los derechos reservados.
         </p>
       </footer>
     </main>
