@@ -139,6 +139,12 @@ export default function Home() {
     setForm(FORM_INICIAL);
   };
 
+  const fechaMinima = new Date(
+    Date.now() - new Date().getTimezoneOffset() * 60000
+  )
+    .toISOString()
+    .slice(0, 16);
+
   return (
     <main className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200">
       <header className="sticky top-0 z-50 border-b border-sky-500/10 bg-slate-950/80 backdrop-blur-md">
@@ -267,7 +273,7 @@ export default function Home() {
           {SERVICIOS.map((servicio) => (
             <div
               key={servicio.id}
-              className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900/40 p-6 transition duration-300 hover:border-cyan-500/30 hover:bg-slate-900/80 hover:shadow-[0_0_20px_rgba(6,182,212,0.05)]"
+              className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900/40 p-6 transition duration-300 hover:border-cyan-500/30 hover:bg-slate-900/80"
               data-aos="fade-up"
             >
               <span className="font-semibold text-slate-200">
@@ -342,7 +348,7 @@ export default function Home() {
                 </h3>
 
                 <p className="mt-2 text-sm text-slate-400">
-                  Selecciona tu horario y asegura tu lugar.
+                  Selecciona tu horario y asegura tu lugar en la base de datos.
                 </p>
               </div>
 
@@ -367,7 +373,8 @@ export default function Home() {
                 </h4>
 
                 <p className="mt-3 text-slate-400">
-                  Gracias, {form.nombre}. Tu reserva se ha guardado correctamente.
+                  Gracias, {form.nombre}. Los datos se guardaron correctamente
+                  en Supabase.
                 </p>
 
                 <button
@@ -385,7 +392,7 @@ export default function Home() {
                     htmlFor="nombre"
                     className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
                   >
-                    Nombre completo
+                    Nombre
                   </label>
 
                   <input
@@ -396,7 +403,7 @@ export default function Home() {
                     required
                     maxLength={100}
                     className={inputClase}
-                    placeholder="Escribe tu nombre"
+                    placeholder="Tu nombre completo"
                     value={form.nombre}
                     onChange={handleChange}
                   />
@@ -463,9 +470,7 @@ export default function Home() {
                     name="fecha"
                     type="datetime-local"
                     required
-                    min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-                      .toISOString()
-                      .slice(0, 16)}
+                    min={fechaMinima}
                     className={inputClase}
                     value={form.fecha}
                     onChange={handleChange}
