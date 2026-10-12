@@ -41,9 +41,12 @@ export default function Home() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [montado, setMontado] = useState(false);
   const [form, setForm] = useState<FormData>(FORM_INICIAL);
 
   useEffect(() => {
+    setMontado(true);
+
     AOS.init({
       duration: 1000,
       once: true,
@@ -84,6 +87,11 @@ export default function Home() {
 
     if (cargando) return;
 
+    if (!form.nombre.trim() || !form.telefono.trim() || !form.servicio) {
+      alert('Completa todos los campos.');
+      return;
+    }
+
     if (!form.fecha) {
       alert('Por favor, selecciona una fecha y hora.');
       return;
@@ -115,7 +123,7 @@ export default function Home() {
 
       setEnviado(true);
     } catch (error) {
-      console.error('Error al guardar la reserva:', error);
+      console.error('Error al guardar el turno:', error);
       alert('Hubo un error al reservar. Inténtalo de nuevo.');
     } finally {
       setCargando(false);
@@ -144,6 +152,10 @@ export default function Home() {
   )
     .toISOString()
     .slice(0, 16);
+
+  if (!montado) {
+    return <div className="min-h-screen bg-slate-950" />;
+  }
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200">
@@ -266,7 +278,7 @@ export default function Home() {
             Nuestros servicios
           </h3>
 
-          <div className="mx-auto mt-4 h-0.5 w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+          <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -302,7 +314,7 @@ export default function Home() {
             Nuestro trabajo
           </h3>
 
-          <div className="mx-auto mt-4 h-0.5 w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+          <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
