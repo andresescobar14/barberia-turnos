@@ -32,6 +32,7 @@ export default function Home() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
+  const [montado, setMontado] = useState(false);
 
   const [form, setForm] = useState<FormularioReserva>({
     nombre: '',
@@ -39,8 +40,6 @@ export default function Home() {
     servicio: '',
     fecha: '',
   });
-
-  const [montado, setMontado] = useState(false);
 
   useEffect(() => {
     setMontado(true);
@@ -66,6 +65,11 @@ export default function Home() {
       delay: 0.4,
       ease: 'power2.out',
     });
+
+    return () => {
+      gsap.killTweensOf('.gsap-hero-title');
+      gsap.killTweensOf('.gsap-hero-btn');
+    };
   }, []);
 
   const handleChange = (
@@ -82,31 +86,32 @@ export default function Home() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!form.nombre.trim() || !form.telefono.trim() || !form.servicio) {
+    if (
+      !form.nombre.trim() ||
+      !form.telefono.trim() ||
+      !form.servicio ||
+      !form.fecha
+    ) {
       alert('Por favor, completa todos los campos.');
-      return;
-    }
-
-    if (!form.fecha) {
-      alert('Por favor, selecciona una fecha y hora.');
       return;
     }
 
     const fechaSeleccionada = new Date(form.fecha);
 
     if (Number.isNaN(fechaSeleccionada.getTime())) {
-      alert('La fecha seleccionada no es válida.');
+      alert('La fecha y hora seleccionadas no son válidas.');
       return;
     }
 
     if (fechaSeleccionada.getTime() < Date.now()) {
-      alert('Selecciona una fecha y hora futuras.');
+      alert('Por favor, selecciona una fecha y hora futuras.');
       return;
     }
 
     setCargando(true);
 
     try {
+      // Verifica que la tabla "turnos" tenga estas columnas en Supabase.
       const { error } = await supabase.from('turnos').insert([
         {
           nombre: form.nombre.trim(),
@@ -144,6 +149,12 @@ export default function Home() {
   const inputClase =
     'w-full rounded-lg border border-sky-900 bg-slate-900/80 px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition duration-150 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30';
 
+  const fechaMinima = new Date(
+    Date.now() - new Date().getTimezoneOffset() * 60000,
+  )
+    .toISOString()
+    .slice(0, 16);
+
   if (!montado) {
     return <div className="min-h-screen bg-slate-950" />;
   }
@@ -159,6 +170,7 @@ export default function Home() {
         />
       </Head>
 
+      {/* Encabezado */}
       <header className="sticky top-0 z-50 border-b border-sky-500/10 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -188,6 +200,7 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Hero */}
       <section className="relative flex min-h-[85vh] items-center justify-center px-6 text-center">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_60%)]" />
 
@@ -223,6 +236,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Nosotros */}
       <section
         id="nosotros"
         className="mx-auto max-w-5xl border-t border-slate-900 px-6 py-20"
@@ -250,7 +264,9 @@ export default function Home() {
             className="relative flex h-64 flex-col justify-center rounded-2xl border border-sky-500/10 bg-gradient-to-br from-slate-900 to-sky-950 p-8 shadow-inner"
             data-aos="zoom-in"
           >
-            <div className="mb-2 text-4xl font-black text-cyan-400">100%</div>
+            <div className="mb-2 text-4xl font-black text-cyan-400">
+              100%
+            </div>
 
             <div className="font-bold uppercase tracking-wider text-white">
               Garantía de Satisfacción
@@ -264,6 +280,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Servicios */}
       <section
         id="servicios"
         className="mx-auto max-w-6xl border-t border-slate-900 px-6 py-20"
@@ -300,6 +317,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Galería */}
       <section
         id="galeria"
         className="mx-auto max-w-6xl border-t border-slate-900 px-6 py-20"
@@ -332,12 +350,15 @@ export default function Home() {
                 {trabajo.titulo}
               </h4>
 
-              <p className="mt-2 text-sm text-slate-400">{trabajo.desc}</p>
+              <p className="mt-2 text-sm text-slate-400">
+                {trabajo.desc}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
+      {/* Formulario de reservas */}
       <section
         id="reservas"
         className="scroll-mt-24 border-t border-slate-900 px-6 py-20"
@@ -457,7 +478,10 @@ export default function Home() {
                     <option value="">Selecciona un servicio</option>
 
                     {SERVICIOS.map((servicio) => (
-                      <option key={servicio.id} value={servicio.nombre}>
+                      <option
+                        key={servicio.id}
+                        value={servicio.nombre}
+                      >
                         {servicio.nombre} — {servicio.precio}
                       </option>
                     ))}
@@ -478,9 +502,7 @@ export default function Home() {
                     type="datetime-local"
                     value={form.fecha}
                     onChange={handleChange}
-                    min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
-                      .toISOString()
-                      .slice(0, 16)}
+                    min={fechaMinima}
                     className={inputClase}
                     required
                   />
@@ -499,6 +521,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pie de página */}
       <footer className="border-t border-slate-900 px-6 py-8 text-center">
         <p className="text-sm text-slate-500">
           © {new Date().getFullYear()} Cyber Barber. Todos los derechos reservados.
