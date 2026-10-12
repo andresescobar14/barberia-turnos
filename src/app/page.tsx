@@ -46,6 +46,10 @@ export default function Home() {
 
   useEffect(() => {
     setMontado(true);
+  }, []);
+
+  useEffect(() => {
+    if (!montado) return;
 
     AOS.init({
       duration: 1000,
@@ -70,8 +74,10 @@ export default function Home() {
       });
     });
 
+    AOS.refreshHard();
+
     return () => contexto.revert();
-  }, []);
+  }, [montado]);
 
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -87,13 +93,13 @@ export default function Home() {
 
     if (cargando) return;
 
-    if (!form.nombre.trim() || !form.telefono.trim() || !form.servicio) {
-      alert('Completa todos los campos.');
-      return;
-    }
-
-    if (!form.fecha) {
-      alert('Por favor, selecciona una fecha y hora.');
+    if (
+      !form.nombre.trim() ||
+      !form.telefono.trim() ||
+      !form.servicio ||
+      !form.fecha
+    ) {
+      alert('Por favor, completa todos los campos.');
       return;
     }
 
@@ -348,7 +354,7 @@ export default function Home() {
         <div
           className={`mx-auto max-w-xl overflow-hidden transition-all duration-700 ease-out ${
             mostrarFormulario
-              ? 'max-h-[1100px] translate-y-0 opacity-100'
+              ? 'max-h-[1000px] translate-y-0 opacity-100'
               : 'pointer-events-none max-h-0 translate-y-10 opacity-0'
           }`}
         >
@@ -385,7 +391,7 @@ export default function Home() {
                 </h4>
 
                 <p className="mt-3 text-slate-400">
-                  Gracias, {form.nombre}. Los datos se guardaron correctamente
+                  Gracias, {form.nombre}. Los datos se han guardado correctamente
                   en Supabase.
                 </p>
 
@@ -404,7 +410,7 @@ export default function Home() {
                     htmlFor="nombre"
                     className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
                   >
-                    Nombre
+                    Nombre completo
                   </label>
 
                   <input
