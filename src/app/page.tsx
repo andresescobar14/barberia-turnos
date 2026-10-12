@@ -5,6 +5,7 @@ import { supabase } from '../supabase';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import { gsap } from 'gsap';
+import Head from 'next/head';
 
 const SERVICIOS = [
   { id: 'corte', nombre: 'Corte Ejecutivo', precio: '$250' },
@@ -20,84 +21,60 @@ const TRABAJOS = [
   { id: 3, titulo: 'Estilo Urbano', desc: 'Tendencias modernas' },
 ];
 
-type FormData = {
+type FormularioReserva = {
   nombre: string;
   telefono: string;
   servicio: string;
   fecha: string;
 };
 
-const FORM_INICIAL: FormData = {
-  nombre: '',
-  telefono: '',
-  servicio: '',
-  fecha: '',
-};
-
-const inputClase =
-  'w-full rounded-lg border border-sky-900 bg-slate-900/80 px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30';
-
 export default function Home() {
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [cargando, setCargando] = useState(false);
+
+  const [form, setForm] = useState<FormularioReserva>({
+    nombre: '',
+    telefono: '',
+    servicio: '',
+    fecha: '',
+  });
+
   const [montado, setMontado] = useState(false);
-  const [form, setForm] = useState<FormData>(FORM_INICIAL);
-  const [fechaMinima, setFechaMinima] = useState('');
-  const [anioActual, setAnioActual] = useState<number | null>(null);
 
   useEffect(() => {
-    const ahora = new Date();
-
-    const fechaLocal = new Date(
-      ahora.getTime() - ahora.getTimezoneOffset() * 60000
-    )
-      .toISOString()
-      .slice(0, 16);
-
-    setFechaMinima(fechaLocal);
-    setAnioActual(ahora.getFullYear());
     setMontado(true);
-  }, []);
-
-  useEffect(() => {
-    if (!montado) return;
 
     AOS.init({
-      duration: 1000,
+      duration: 800,
       once: true,
-      easing: 'ease-out-cubic',
+      easing: 'ease-out',
+      disable: 'mobile',
     });
 
-    const contexto = gsap.context(() => {
-      gsap.from('.gsap-hero-title', {
-        opacity: 0,
-        y: -50,
-        duration: 1.2,
-        ease: 'power3.out',
-      });
-
-      gsap.from('.gsap-hero-btn', {
-        opacity: 0,
-        scale: 0.8,
-        duration: 1,
-        delay: 0.5,
-        ease: 'back.out(1.7)',
-      });
+    gsap.from('.gsap-hero-title', {
+      opacity: 0,
+      y: -30,
+      duration: 1,
+      ease: 'power2.out',
     });
 
-    AOS.refreshHard();
-
-    return () => contexto.revert();
-  }, [montado]);
+    gsap.from('.gsap-hero-btn', {
+      opacity: 0,
+      scale: 0.9,
+      duration: 0.8,
+      delay: 0.4,
+      ease: 'power2.out',
+    });
+  }, []);
 
   const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
 
-    setForm((actual) => ({
-      ...actual,
+    setForm((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -105,15 +82,13 @@ export default function Home() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (cargando) return;
-
-    if (
-      !form.nombre.trim() ||
-      !form.telefono.trim() ||
-      !form.servicio ||
-      !form.fecha
-    ) {
+    if (!form.nombre.trim() || !form.telefono.trim() || !form.servicio) {
       alert('Por favor, completa todos los campos.');
+      return;
+    }
+
+    if (!form.fecha) {
+      alert('Por favor, selecciona una fecha y hora.');
       return;
     }
 
@@ -124,7 +99,7 @@ export default function Home() {
       return;
     }
 
-    if (fechaSeleccionada.getTime() <= Date.now()) {
+    if (fechaSeleccionada.getTime() < Date.now()) {
       alert('Selecciona una fecha y hora futuras.');
       return;
     }
@@ -132,12 +107,14 @@ export default function Home() {
     setCargando(true);
 
     try {
-      const { error } = await supabase.from('turnos').insert({
-        nombre: form.nombre.trim(),
-        telefono: form.telefono.trim(),
-        servicio: form.servicio,
-        fecha: fechaSeleccionada.toISOString(),
-      });
+      const { error } = await supabase.from('turnos').insert([
+        {
+          nombre: form.nombre.trim(),
+          telefono: form.telefono.trim(),
+          servicio: form.servicio,
+          fecha: fechaSeleccionada.toISOString(),
+        },
+      ]);
 
       if (error) {
         throw error;
@@ -145,8 +122,8 @@ export default function Home() {
 
       setEnviado(true);
     } catch (error) {
-      console.error('Error al guardar el turno:', error);
-      alert('Hubo un error al reservar. Inténtalo de nuevo.');
+      console.error('Error al guardar turno:', error);
+      alert('Hubo un error al reservar. Inténtalo nuevamente.');
     } finally {
       setCargando(false);
     }
@@ -156,25 +133,32 @@ export default function Home() {
     setMostrarFormulario(true);
     setEnviado(false);
 
-    window.setTimeout(() => {
-      document
-        .getElementById('reservas')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setTimeout(() => {
+      document.getElementById('reservas')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
     }, 100);
   };
 
-  const cerrarFormulario = () => {
-    setMostrarFormulario(false);
-    setEnviado(false);
-    setForm(FORM_INICIAL);
-  };
+  const inputClase =
+    'w-full rounded-lg border border-sky-900 bg-slate-900/80 px-4 py-3 text-slate-100 placeholder-slate-500 outline-none transition duration-150 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30';
 
   if (!montado) {
     return <div className="min-h-screen bg-slate-950" />;
   }
 
   return (
-    <main className="min-h-screen overflow-x-hidden bg-slate-950 text-slate-200">
+    <main className="min-h-screen overflow-x-hidden scroll-smooth bg-slate-950 text-slate-200">
+      <Head>
+        <meta name="robots" content="noindex, nofollow" />
+        <title>Cyber Barber | Reserva tu turno</title>
+        <meta
+          name="description"
+          content="Reserva tu turno en Cyber Barber y descubre nuestros servicios de barbería."
+        />
+      </Head>
+
       <header className="sticky top-0 z-50 border-b border-sky-500/10 bg-slate-950/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -191,15 +175,12 @@ export default function Home() {
             <a href="#nosotros" className="transition hover:text-cyan-400">
               Nosotros
             </a>
-
             <a href="#servicios" className="transition hover:text-cyan-400">
               Servicios
             </a>
-
             <a href="#galeria" className="transition hover:text-cyan-400">
               Galería
             </a>
-
             <a href="#reservas" className="transition hover:text-cyan-400">
               Reservas
             </a>
@@ -208,7 +189,7 @@ export default function Home() {
       </header>
 
       <section className="relative flex min-h-[85vh] items-center justify-center px-6 text-center">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.15),transparent_60%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.12),transparent_60%)]" />
 
         <div className="relative z-10 max-w-3xl">
           <div className="gsap-hero-title">
@@ -232,7 +213,7 @@ export default function Home() {
           <button
             type="button"
             onClick={abrirFormulario}
-            className="gsap-hero-btn group mt-10 inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 transition duration-300 hover:scale-105 hover:shadow-cyan-400/40 active:scale-95"
+            className="gsap-hero-btn group mt-10 inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 transition duration-200 hover:scale-105 hover:shadow-cyan-400/40 active:scale-95"
           >
             Reservar turno ahora
             <span className="transition-transform group-hover:translate-x-1">
@@ -250,7 +231,7 @@ export default function Home() {
         <div className="grid items-center gap-12 md:grid-cols-2">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.4em] text-cyan-400">
-              Quiénes somos
+              Quiénes Somos
             </p>
 
             <h3 className="mt-2 text-3xl font-bold text-white">
@@ -269,12 +250,10 @@ export default function Home() {
             className="relative flex h-64 flex-col justify-center rounded-2xl border border-sky-500/10 bg-gradient-to-br from-slate-900 to-sky-950 p-8 shadow-inner"
             data-aos="zoom-in"
           >
-            <div className="mb-2 text-4xl font-black text-cyan-400">
-              100%
-            </div>
+            <div className="mb-2 text-4xl font-black text-cyan-400">100%</div>
 
             <div className="font-bold uppercase tracking-wider text-white">
-              Garantía de satisfacción
+              Garantía de Satisfacción
             </div>
 
             <div className="mt-2 text-sm text-slate-500">
@@ -292,11 +271,11 @@ export default function Home() {
       >
         <div className="mb-12 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.4em] text-cyan-400">
-            Menú de opciones
+            Menú de Opciones
           </p>
 
           <h3 className="mt-3 text-3xl font-bold text-white">
-            Nuestros servicios
+            Nuestros Servicios
           </h3>
 
           <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
@@ -306,7 +285,7 @@ export default function Home() {
           {SERVICIOS.map((servicio) => (
             <div
               key={servicio.id}
-              className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900/40 p-6 transition duration-300 hover:border-cyan-500/30 hover:bg-slate-900/80"
+              className="flex items-center justify-between rounded-xl border border-slate-900 bg-slate-900/40 p-6 transition duration-200 hover:border-cyan-500/30 hover:bg-slate-900/80"
               data-aos="fade-up"
             >
               <span className="font-semibold text-slate-200">
@@ -328,11 +307,11 @@ export default function Home() {
       >
         <div className="mb-12 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.4em] text-cyan-400">
-            Portafolio visual
+            Portafolio Visual
           </p>
 
           <h3 className="mt-3 text-3xl font-bold text-white">
-            Nuestro trabajo
+            Nuestro Trabajo
           </h3>
 
           <div className="mx-auto mt-4 h-px w-16 bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
@@ -342,7 +321,7 @@ export default function Home() {
           {TRABAJOS.map((trabajo) => (
             <div
               key={trabajo.id}
-              className="group relative overflow-hidden rounded-xl border border-slate-900 bg-slate-900/20 p-8 transition duration-300 hover:border-cyan-500/20"
+              className="group relative overflow-hidden rounded-xl border border-slate-900 bg-slate-900/20 p-8 transition duration-200 hover:border-cyan-500/20"
               data-aos="zoom-in"
             >
               <div className="mb-4 font-mono text-2xl text-cyan-500/40">
@@ -354,8 +333,6 @@ export default function Home() {
               </h4>
 
               <p className="mt-2 text-sm text-slate-400">{trabajo.desc}</p>
-
-              <div className="absolute bottom-0 left-0 h-1 w-0 bg-cyan-400 transition-all duration-300 group-hover:w-full" />
             </div>
           ))}
         </div>
@@ -363,59 +340,58 @@ export default function Home() {
 
       <section
         id="reservas"
-        className="border-t border-slate-900 px-6 py-20"
-        data-aos="fade-up"
+        className="scroll-mt-24 border-t border-slate-900 px-6 py-20"
       >
         <div
-          className={`mx-auto max-w-xl overflow-hidden transition-all duration-700 ease-out ${
+          className={`mx-auto max-w-xl transition-all duration-500 ease-in-out ${
             mostrarFormulario
-              ? 'max-h-[1000px] translate-y-0 opacity-100'
-              : 'pointer-events-none max-h-0 translate-y-10 opacity-0'
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-4 opacity-80'
           }`}
         >
-          <div className="rounded-2xl border border-cyan-500/20 bg-slate-900/70 p-8 shadow-2xl backdrop-blur-md">
-            <div className="mb-6 flex items-start justify-between">
-              <div>
-                <h3 className="text-2xl font-bold text-white">
-                  Reserva tu espacio
-                </h3>
+          <div className="mb-10 text-center">
+            <p className="text-xs font-medium uppercase tracking-[0.4em] text-cyan-400">
+              Agenda Digital
+            </p>
 
-                <p className="mt-2 text-sm text-slate-400">
-                  Selecciona tu horario y asegura tu lugar en la base de datos.
-                </p>
-              </div>
+            <h3 className="mt-3 text-3xl font-bold text-white">
+              Reserva tu espacio
+            </h3>
 
-              <button
-                type="button"
-                onClick={cerrarFormulario}
-                aria-label="Cerrar formulario"
-                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-800 hover:text-cyan-400"
-              >
-                ✕
-              </button>
-            </div>
+            <p className="mt-4 text-slate-400">
+              Selecciona tu horario y asegura tu lugar en nuestra base de datos.
+            </p>
+          </div>
 
+          <div className="rounded-2xl border border-sky-500/20 bg-slate-900/50 p-6 shadow-xl shadow-cyan-950/20 sm:p-8">
             {enviado ? (
-              <div className="py-10 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-cyan-400 text-3xl text-cyan-400">
+              <div className="py-8 text-center">
+                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-400/30 bg-cyan-400/10 text-3xl text-cyan-400">
                   ✓
                 </div>
 
-                <h4 className="text-xl font-bold text-white">
+                <h4 className="text-2xl font-bold text-white">
                   ¡Reserva guardada con éxito!
                 </h4>
 
-                <p className="mt-3 text-slate-400">
-                  Gracias, {form.nombre}. Los datos se han guardado correctamente
-                  en Supabase.
+                <p className="mt-4 text-slate-400">
+                  Gracias, {form.nombre}. Tu reserva se ha guardado en Supabase.
                 </p>
 
                 <button
                   type="button"
-                  onClick={cerrarFormulario}
-                  className="mt-6 rounded-xl border border-cyan-400 px-6 py-3 text-sm font-bold uppercase tracking-widest text-cyan-400 transition hover:bg-cyan-400 hover:text-slate-950"
+                  onClick={() => {
+                    setForm({
+                      nombre: '',
+                      telefono: '',
+                      servicio: '',
+                      fecha: '',
+                    });
+                    setEnviado(false);
+                  }}
+                  className="mt-8 rounded-xl border border-cyan-500/30 px-6 py-3 font-semibold text-cyan-400 transition hover:bg-cyan-500/10"
                 >
-                  Cerrar
+                  Hacer otra reserva
                 </button>
               </div>
             ) : (
@@ -423,7 +399,7 @@ export default function Home() {
                 <div>
                   <label
                     htmlFor="nombre"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
+                    className="mb-2 block text-sm font-medium text-slate-300"
                   >
                     Nombre completo
                   </label>
@@ -432,20 +408,19 @@ export default function Home() {
                     id="nombre"
                     name="nombre"
                     type="text"
-                    autoComplete="name"
-                    required
-                    maxLength={100}
-                    className={inputClase}
-                    placeholder="Tu nombre completo"
                     value={form.nombre}
                     onChange={handleChange}
+                    placeholder="Escribe tu nombre"
+                    className={inputClase}
+                    autoComplete="name"
+                    required
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="telefono"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
+                    className="mb-2 block text-sm font-medium text-slate-300"
                   >
                     Teléfono
                   </label>
@@ -454,20 +429,19 @@ export default function Home() {
                     id="telefono"
                     name="telefono"
                     type="tel"
-                    autoComplete="tel"
-                    required
-                    maxLength={25}
-                    className={inputClase}
-                    placeholder="Ej: +52 55 1234 5678"
                     value={form.telefono}
                     onChange={handleChange}
+                    placeholder="Tu número de teléfono"
+                    className={inputClase}
+                    autoComplete="tel"
+                    required
                   />
                 </div>
 
                 <div>
                   <label
                     htmlFor="servicio"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
+                    className="mb-2 block text-sm font-medium text-slate-300"
                   >
                     Servicio
                   </label>
@@ -475,10 +449,10 @@ export default function Home() {
                   <select
                     id="servicio"
                     name="servicio"
-                    required
-                    className={inputClase}
                     value={form.servicio}
                     onChange={handleChange}
+                    className={inputClase}
+                    required
                   >
                     <option value="">Selecciona un servicio</option>
 
@@ -493,7 +467,7 @@ export default function Home() {
                 <div>
                   <label
                     htmlFor="fecha"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-widest text-slate-400"
+                    className="mb-2 block text-sm font-medium text-slate-300"
                   >
                     Fecha y hora
                   </label>
@@ -502,42 +476,32 @@ export default function Home() {
                     id="fecha"
                     name="fecha"
                     type="datetime-local"
-                    required
-                    min={fechaMinima}
-                    className={inputClase}
                     value={form.fecha}
                     onChange={handleChange}
+                    min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+                      .toISOString()
+                      .slice(0, 16)}
+                    className={inputClase}
+                    required
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={cargando}
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-400/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-4 font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 transition hover:scale-[1.02] hover:shadow-cyan-400/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {cargando ? 'Sincronizando...' : 'Confirmar turno'}
+                  {cargando ? 'Sincronizando...' : 'Confirmar Turno'}
                 </button>
               </form>
             )}
           </div>
         </div>
-
-        {!mostrarFormulario && (
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={abrirFormulario}
-              className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-10 py-4 text-sm font-bold uppercase tracking-widest text-white shadow-lg shadow-cyan-500/20 transition hover:scale-105 hover:shadow-cyan-400/40 active:scale-95"
-            >
-              Reservar mi turno
-            </button>
-          </div>
-        )}
       </section>
 
       <footer className="border-t border-slate-900 px-6 py-8 text-center">
-        <p className="text-xs uppercase tracking-widest text-slate-500">
-          © {anioActual} Cyber Barber. Todos los derechos reservados.
+        <p className="text-sm text-slate-500">
+          © {new Date().getFullYear()} Cyber Barber. Todos los derechos reservados.
         </p>
       </footer>
     </main>
