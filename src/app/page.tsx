@@ -67,7 +67,7 @@ export default function Home() {
 
       setEnviado(true);
     } catch (error) {
-      console.error('Error al guardar el turno:', error);
+      console.error('Error al guardar turno:', error);
       alert('Hubo un error al reservar. Inténtalo de nuevo.');
     } finally {
       setCargando(false);
@@ -99,6 +99,7 @@ export default function Home() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-500 text-lg text-amber-500">
               ✂
             </span>
+
             <h1 className="text-xl font-semibold uppercase tracking-[0.3em] text-amber-500 sm:text-2xl">
               Royal Barber
             </h1>
@@ -171,6 +172,7 @@ export default function Home() {
               <span className="font-medium text-neutral-200">
                 {servicio.nombre}
               </span>
+
               <span className="font-semibold text-amber-500">
                 {servicio.precio}
               </span>
@@ -193,6 +195,7 @@ export default function Home() {
                 <h3 className="text-2xl font-semibold text-white">
                   Reserva tu turno
                 </h3>
+
                 <p className="mt-1 text-sm text-neutral-500">
                   Completa tus datos y te confirmaremos.
                 </p>
@@ -219,7 +222,8 @@ export default function Home() {
                 </h4>
 
                 <p className="mt-2 text-neutral-400">
-                  Gracias, {form.nombre}. Tu turno se ha guardado correctamente.
+                  Gracias, {form.nombre}. Tu turno se ha guardado correctamente
+                  en la base de datos.
                 </p>
 
                 <button
@@ -237,7 +241,7 @@ export default function Home() {
                     htmlFor="nombre"
                     className="mb-2 block text-xs uppercase tracking-widest text-neutral-400"
                   >
-                    Nombre completo
+                    Nombre
                   </label>
 
                   <input
@@ -293,6 +297,7 @@ export default function Home() {
                     onChange={handleChange}
                   >
                     <option value="">Selecciona un servicio</option>
+
                     {SERVICIOS.map((servicio) => (
                       <option key={servicio.id} value={servicio.nombre}>
                         {servicio.nombre} — {servicio.precio}
@@ -314,7 +319,6 @@ export default function Home() {
                     name="fecha"
                     type="datetime-local"
                     required
-                    min={new Date().toISOString().slice(0, 16)}
                     className={inputClase}
                     value={form.fecha}
                     onChange={handleChange}
