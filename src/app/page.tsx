@@ -48,6 +48,11 @@ export default function Home() {
 
     if (cargando) return;
 
+    if (!form.fecha) {
+      alert('Por favor, selecciona una fecha y hora.');
+      return;
+    }
+
     setCargando(true);
 
     try {
@@ -214,8 +219,7 @@ export default function Home() {
                 </h4>
 
                 <p className="mt-2 text-neutral-400">
-                  Gracias, {form.nombre}. Tu reserva se ha guardado
-                  correctamente.
+                  Gracias, {form.nombre}. Tu turno se ha guardado correctamente.
                 </p>
 
                 <button
